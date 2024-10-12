@@ -39,8 +39,8 @@ void OnDataRecv(uint8_t *mac, uint8_t *incomingData, uint8_t len) {
   }
 
   // Print received message
-  Serial.print("Received message: ");
-  Serial.println(receivedMessage);
+  //Serial.print("Received message: ");
+  //Serial.println(receivedMessage);
 
   // Split the received message into key-value pairs
   String* keyValuePairs;
@@ -70,7 +70,7 @@ void OnDataRecv(uint8_t *mac, uint8_t *incomingData, uint8_t len) {
   serializeJson(doc, jsonString);
 
   // Print the JSON string
-  Serial.print("JSON string: ");
+  //Serial.print("JSON string: ");
   Serial.println(jsonString);
 }
 
@@ -123,6 +123,6 @@ void setup()
 void loop()
 {
   // no work required - all work is done in the OnDataRecv callback from espnow
-  Serial.println("{\"device\":\"watermeter\",\"flowrate\":\"12\"}");
-  delay(5000);
+  // Serial.println("{\"device\":\"watermeter\",\"flowrate\":\"12\"}");
+  // delay(5000);
 }
