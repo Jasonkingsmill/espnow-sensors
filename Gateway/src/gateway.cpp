@@ -7,6 +7,7 @@
 // This is the MAC address to be installed (sensors shall then send to this MAC address)
 uint8_t GatewayMac[] =      {0x02, 0x10, 0x11, 0x12, 0x13, 0x14};
 
+#define WIFI_CHANNEL 1
 
 // Function to split a string by a delimiter
 void splitString(String data, char delimiter, String* &result, int &size) {
@@ -93,6 +94,7 @@ void setup()
   
   // Set device in AP mode to begin with
   WiFi.mode(WIFI_AP_STA);                         // AP _and_ STA is required (!IMPORTANT)
+  WiFi.channel(WIFI_CHANNEL);
   wifi_set_macaddr(SOFTAP_IF, &GatewayMac[0]);          //8266 code
 
   // Come here - we are connected
