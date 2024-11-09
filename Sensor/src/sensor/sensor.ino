@@ -33,6 +33,7 @@
 
 RTC_DATA_ATTR unsigned long sleepStartedTime = 0;
 RTC_DATA_ATTR unsigned long lastSendTime = 0;
+RTC_DATA_ATTR boolean ignoreNextWakeTrigger = false;
 volatile unsigned long lastPulseTime = 0;
 volatile byte pulseCount = 0;
 bool sendFinished = false;
@@ -192,9 +193,16 @@ void setupIO() {
 }
 
 
-void goToSleep() {
-  // enable the wakeup source
-  esp_sleep_enable_ext1_wakeup_io(BUTTON_PIN_BITMASK(WAKEUP_GPIO), ESP_EXT1_WAKEUP_ANY_LOW);
+void goToSleep(int currentState) {
+
+  // Current state is low, invert
+  if (currentState == 0) {
+    esp_sleep_enable_ext1_wakeup_io(BUTTON_PIN_BITMASK(WAKEUP_GPIO), ESP_EXT1_WAKEUP_ANY_HIGH);
+    ignoreNextWakeTrigger = true;
+  } else if (currentState == 1) {
+    esp_sleep_enable_ext1_wakeup_io(BUTTON_PIN_BITMASK(WAKEUP_GPIO), ESP_EXT1_WAKEUP_ANY_LOW);
+  }
+
   rtc_gpio_pullup_en(WAKEUP_GPIO);
   rtc_gpio_pulldown_dis(WAKEUP_GPIO);
   esp_sleep_enable_timer_wakeup(SLEEP_TIME_US);
@@ -212,6 +220,7 @@ void resetCounters() {
 }
 
 void handleReset() {
+
   esp_sleep_wakeup_cause_t wakeupCause = esp_sleep_get_wakeup_cause();
   switch (wakeupCause) {
     case ESP_SLEEP_WAKEUP_EXT1:
@@ -219,16 +228,21 @@ void handleReset() {
       delay(3000);
       Serial.println("Awake");
 #endif
+      if (ignoreNextWakeTrigger == true) {
+        ignoreNextWakeTrigger = false;
+        goToSleep(digitalRead(WAKEUP_GPIO));
+      }
       lastPulseTime = millis();
       pulseCount++;
       break;
     case ESP_SLEEP_WAKEUP_TIMER:
+      ignoreNextWakeTrigger = false;
 #ifdef DEBUG_LOG
       delay(5000);
 #endif
       sendData();  // send empty payload as a checkin
                    // delay(500);
-      goToSleep();
+      goToSleep(digitalRead(WAKEUP_GPIO));
       break;
     default:             // not sure here
       lastSendTime = 0;  // unknown why we started here so don't
@@ -242,7 +256,7 @@ void handleReset() {
 #endif
       sendData();  // send empty payload as a checkin
       delay(500);
-      goToSleep();
+      goToSleep(digitalRead(WAKEUP_GPIO));
       break;
   }
 }
@@ -264,5 +278,6 @@ void loop() {
     //resetCounters();
   }
   digitalWrite(LED_PIN, LOW);
-  goToSleep();
+
+  goToSleep(digitalRead(WAKEUP_GPIO));
 }
